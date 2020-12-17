@@ -1,0 +1,12 @@
+name: "cofrag cm"
+description: Cofragmentation analysis, part 1 - infer contact matrices
+authors:
+  - Haizi Zheng
+input:
+  - frag      fragment data
+  - frag_idx  fragment data index
+  - intersect_region
+  - exclude_region
+  - chrom_sizes
+output:
+  - cm        cofrag matrix

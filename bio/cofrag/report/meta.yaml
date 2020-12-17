@@ -1,0 +1,16 @@
+name: "cofrag cm"
+description: Cofragmentation analysis, part 1 - infer contact matrices
+authors:
+  - Haizi Zheng
+input:
+  - cm
+  - standard_hic
+  - standard_compartment
+  - juicer
+  - chrom_sizes
+output:
+  - compartment
+  - compcor
+  - compcor_chart
+  - hicrep
+  - hicrep_chart
