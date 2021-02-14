@@ -1,12 +1,18 @@
-__author__ = "Patrik Smeds"
-__copyright__ = "Copyright 2016, Patrik Smeds"
-__email__ = "patrik.smeds@gmail.com"
+__author__ = "Haizi Zheng"
+__copyright__ = "Copyright 2020, Haizi Zheng"
+__email__ = "haizi.zh@gmail.com"
 __license__ = "MIT"
 
 from os import path
 from snakemake.shell import shell
 from tempfile import TemporaryDirectory
 from snakemake.logging import logger
+import random
+
+
+def get_mem(mem_str):
+    # mem_str: 500kb, ...
+    return int(mem_str[:-2]) * 1000
 
 
 with TemporaryDirectory() as tempdir:
@@ -18,16 +24,16 @@ with TemporaryDirectory() as tempdir:
     sparams = snakemake.params
 
     sample_id = sparams.get("sample_id")
-    resol = sparams.get("resol", "")
-    metrics = sparams.get("metrics", "")
-    bootstrap = sparams.get("bootstrap", "")
-    subsample = sparams.get("subsample", "")
-    chroms = sparams.get("chroms", "")
+    resol = get_mem(sparams.get("resol", "500kb"))
+    metrics = sparams.get("metrics", "ks")
+    bootstrap = sparams.get("bootstrap", 10)
+    subsample = sparams.get("subsample", 10000)
+    chroms = sparams.get("chroms", ":".join([str(v) for v in range(1, 23)]))
     exclude_chroms = sparams.get("exclude_chroms", "")
-    seed = sparams.get("seed", "")
-    min_mapq = sparams.get("min_mapq", "")
-    min_fraglen = sparams.get("min_fraglen", "")
-    max_fraglen = sparams.get("max_fraglen", "")
+    seed = sparams.get("seed", random.randint(1, 1000000))
+    min_mapq = sparams.get("min_mapq", 30)
+    min_fraglen = sparams.get("min_fraglen", 100)
+    max_fraglen = sparams.get("max_fraglen", 350)
 
     def join_regions(regions):
         if regions is None:
@@ -43,10 +49,10 @@ with TemporaryDirectory() as tempdir:
 
     cmd = (
         f"Rscript {sparams.get('script')} "
-        + f"--input {sinput.frag} "
-        + f"--output-dir {tempdir} "
-        + f"--sample-id {sample_id} "
-        + f"--ncores {snakemake.threads} "
+        f"--input {sinput.frag} "
+        f"--output-dir {tempdir} "
+        f"--sample-id {sample_id} "
+        f"--ncores {snakemake.threads} "
         + (f"--res {resol} " if resol else "")
         + (f"--metrics {metrics} " if metrics else "")
         + (f"--bootstrap {bootstrap} " if bootstrap else "")
@@ -60,10 +66,10 @@ with TemporaryDirectory() as tempdir:
         + (f"--intersect-region {intersect_region} " if intersect_region else "")
         + (f"--exclude-region {exclude_region} " if exclude_region else "")
         + (f"--chrom-sizes {chrom_sizes} " if chrom_sizes else "")
+        + f"2>&1 | tee {snakemake.output.log}"
     )
     logger.info(cmd)
-
-    shell("{cmd} " + ("2>&1 | tee {snakemake.log}" if (snakemake.log) else "2>&1"))
+    shell(cmd)
 
     output_dir = path.dirname(snakemake.output.cm)
     logger.info(f"Copying to destination: {output_dir}")
